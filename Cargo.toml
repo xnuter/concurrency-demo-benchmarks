@@ -1,0 +1,27 @@
+[package]
+name = "concurrency-demo-benchmarks"
+version = "0.0.4"
+authors = ["xnuter"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+publish = true
+readme = "README.md"
+repository = "https://github.com/xnuter/concurrency-demo-benchmarks"
+homepage = "https://github.com/xnuter/concurrency-demo-benchmarks"
+description = "A small utility to benchmark different approaches for building concurrent applications."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "0.2", features = ["full"] }
+matplotrust = "0.1"
+leaky-bucket = "0.8.2"
+clap = "3.0.0-beta.1"
+crossbeam = "0.8"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false

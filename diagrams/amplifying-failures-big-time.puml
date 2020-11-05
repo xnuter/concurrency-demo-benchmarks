@@ -1,0 +1,8 @@
+@startuml
+[Service] -down-> node_1
+[Service] -down-> node_2
+[Service] -down-> node_...
+[Service] -down-> node_9
+() node_10 #red
+[Service] .down. node_10 #Red
+@enduml
