@@ -1,0 +1,20 @@
+@startuml
+participant Thread1 order 1
+participant Thread2 order 2
+participant OutputStream order 3
+
+group synchronized2
+group synchronized1
+Thread1 -> OutputStream: write
+hnote over Thread2: idle
+activate OutputStream
+OutputStream -> Thread1: ack
+deactivate OutputStream
+end synchronized2
+Thread2 -> OutputStream: write
+activate OutputStream
+OutputStream -> Thread2: ack
+deactivate OutputStream
+end synchronized1
+
+@enduml

@@ -1,0 +1,17 @@
+@startuml
+participant Thread1 order 1
+participant Thread2 order 2
+collections EventQueue order 3
+participant StreamOwner order 4
+participant OutputStream order 5
+
+Thread1 -> EventQueue: offer
+Thread2 -> EventQueue: offer
+group while (!done)
+StreamOwner -> EventQueue: poll
+StreamOwner -> OutputStream: write
+activate OutputStream
+StreamOwner <- OutputStream: ack
+deactivate OutputStream
+end
+@enduml
