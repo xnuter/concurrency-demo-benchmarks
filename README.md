@@ -12,9 +12,10 @@ A small utility to benchmark different approaches for building concurrent applic
 
 It generates three files in the `./figures` directory:
 
-* `latency_histogram_{name}.png`
-* `latency_percentiles_{name}.png`
-* `request_rate_{name}.png`
+* `latency_histogram_{name}.png` - X-axis latency in ms, Y-axis - counts for buckets
+* `latency_percentiles_{name}.png` - X-axis - 0..100. Y-axis - latency percentile in ms
+* `latency_timeline_{name}.png` - X-axis - a timeline in seconds, Y-axis - latency in ms
+* `request_rate_{name}.png` - X-axis - a timeline in seconds, Y-axis - effective RPS (successes only)
 
 where `{name}` is the `--name` (or `-N`) parameter value.
 
