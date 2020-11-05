@@ -13,9 +13,13 @@ A small utility to benchmark different approaches for building concurrent applic
 It generates three files in the `./figures` directory:
 
 * `latency_histogram_{name}.png` - X-axis latency in ms, Y-axis - counts for buckets
+![LatencyHistogram](./figures/latency_histogram_async_200ms.png)
 * `latency_percentiles_{name}.png` - X-axis - 0..100. Y-axis - latency percentile in ms
-* `latency_timeline_{name}.png` - X-axis - a timeline in seconds, Y-axis - latency in ms
+![LatencyPercentiles](./figures/latency_percentiles_async_200ms.png)
+* `latency_timeline_{name}.png` - X-axis - a timeline in seconds, Y-axis - latency in ms, p50, p90 and p99
+![LatencyTimeline](./figures/latency_timeline_async_200ms.png)
 * `request_rate_{name}.png` - X-axis - a timeline in seconds, Y-axis - effective RPS (successes only)
+![RequestRate](./figures/request_rate_async_200ms.png)
 
 where `{name}` is the `--name` (or `-N`) parameter value.
 
@@ -111,6 +115,18 @@ concurrency-demo-benchmarks --name async_200ms \
                             --num_req 10000 \
                             --latency "200*10" \
                             async
+
+Latencies:
+p0.000 - 0.477 ms
+p50.000 - 0.968 ms
+p90.000 - 1.115 ms
+p95.000 - 1.169 ms
+p99.000 - 1.237 ms
+p99.900 - 1.295 ms
+p99.990 - 1.432 ms
+p100.000 - 1.469 ms
+Avg rate: 1000.000, StdDev: 0.000
+
 ```
 
 * 1000 rps

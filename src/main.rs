@@ -410,8 +410,6 @@ fn build_latency_histogram(config: &ModelConfig, mut latencies: Vec<TaskStats>) 
 }
 
 fn build_latency_timeline(config: &ModelConfig, mut latencies: Vec<TaskStats>) {
-    println!("Latencies:");
-
     latencies.sort_by(|a, b| a.start_time.partial_cmp(&b.start_time).unwrap());
 
     let mut timeline_x = vec![];
