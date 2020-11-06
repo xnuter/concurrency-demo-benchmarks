@@ -361,7 +361,7 @@ fn build_rps_graph(config: &ModelConfig, rps_buckets: HashMap<u64, u64>) {
     figure.add_plot(line_plot.clone());
     figure.add_plot(line_plot);
     figure.save(
-        format!("./figures/request_rate_{}.png", config.name).as_str(),
+        format!("./request_rate_{}.png", config.name).as_str(),
         config.get_python_path(),
     );
 }
@@ -395,7 +395,7 @@ fn build_latency_histogram(config: &ModelConfig, mut latencies: Vec<TaskStats>) 
     figure.add_plot(plot);
 
     figure.save(
-        format!("./figures/latency_histogram_{}.png", config.name).as_str(),
+        format!("./latency_histogram_{}.png", config.name).as_str(),
         config.get_python_path(),
     );
 
@@ -404,7 +404,7 @@ fn build_latency_histogram(config: &ModelConfig, mut latencies: Vec<TaskStats>) 
     figure.add_plot(line_plot.clone());
     figure.add_plot(line_plot);
     figure.save(
-        format!("./figures/latency_percentiles_{}.png", config.name).as_str(),
+        format!("./latency_percentiles_{}.png", config.name).as_str(),
         config.get_python_path(),
     );
 }
@@ -447,7 +447,7 @@ fn build_latency_timeline(config: &ModelConfig, mut latencies: Vec<TaskStats>) {
     figure.add_plot(p90_plot);
     figure.add_plot(p99_plot);
     figure.save(
-        format!("./figures/latency_timeline_{}.png", config.name).as_str(),
+        format!("./latency_timeline_{}.png", config.name).as_str(),
         config.get_python_path(),
     );
 }
