@@ -9,7 +9,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 use tokio::time::delay_for;
 
-const TIMEOUT: u64 = 1_000;
+const TIMEOUT: Duration = Duration::from_secs(1);
 
 #[derive(Clone)]
 struct Task {
@@ -48,11 +48,11 @@ async fn main() {
 
     let mut duration_ms = 1000;
     let mut refill = config.rps;
-    while duration_ms > 1 && refill % 10 == 0 {
+    while duration_ms > 10 && refill % 10 == 0 {
         duration_ms /= 10;
         refill /= 10;
     }
-    println!("Rate limit refill {} per {}ms", refill, duration_ms);
+    println!("Rate limit refill {} per {} ms", refill, duration_ms);
     let rate_limiter = LeakyBucket::builder()
         .refill_amount(refill)
         .refill_interval(Duration::from_millis(duration_ms as u64))
@@ -106,7 +106,7 @@ async fn sync_execution(
                 let now = Instant::now();
                 let stats = TaskStats {
                     start_time: val.start,
-                    success: val.cost < TIMEOUT,
+                    success: val.cost < TIMEOUT.as_millis() as u64,
                     completion_time: now,
                     overhead: now.duration_since(val.start).as_secs_f64() - val.cost as f64 / 1000.,
                 };
@@ -164,7 +164,7 @@ async fn async_execution(
             let now = Instant::now();
             TaskStats {
                 start_time: start,
-                success: cost < TIMEOUT,
+                success: cost < TIMEOUT.as_millis() as u64,
                 completion_time: now,
                 overhead: now.duration_since(start).as_secs_f64() - cost as f64 / 1000.,
             }

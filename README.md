@@ -10,7 +10,7 @@ A small utility to benchmark different approaches for building concurrent applic
 1. `cargo` - https://www.rust-lang.org/tools/install
 1. `python3.6+` with `matplotlib`
 
-It generates three files in the current directory:
+It generates the following files in the current directory:
 
 * `latency_histogram_{name}.png` - X-axis latency in ms, Y-axis - counts for buckets
 ![LatencyHistogram](./figures/latency_histogram_async_200ms.png)
