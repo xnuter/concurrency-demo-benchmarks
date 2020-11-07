@@ -1,9 +1,9 @@
 use clap::clap_app;
-use crossbeam::channel::{Receiver, Sender};
 use leaky_bucket::LeakyBucket;
 use matplotrust::{histogram, line_plot, Figure};
 use std::collections::HashMap;
 use std::ops::AddAssign;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
@@ -61,31 +61,22 @@ async fn main() {
 
     let start_time = Instant::now();
 
-    let (latencies, rps_buckets) = match config.mode {
+    let stats = match config.mode {
         Mode::Sync(n_workers) => {
-            let (stats_store, stats_recv) = crossbeam::channel::bounded::<TaskStats>(config.n_jobs);
             sync_execution(
                 n_workers,
                 &config.latency_distribution,
                 config.n_jobs,
                 rate_limiter,
-                stats_store.clone(),
             )
-            .await;
-            process_sync_stats(start_time, stats_recv)
+            .await
         }
         Mode::Async => {
-            let (stats_store, stats_recv) = tokio::sync::mpsc::channel::<TaskStats>(config.n_jobs);
-            async_execution(
-                &config.latency_distribution,
-                config.n_jobs,
-                rate_limiter,
-                stats_store.clone(),
-            )
-            .await;
-            process_async_stats(config.n_jobs, start_time, stats_recv).await
+            async_execution(&config.latency_distribution, config.n_jobs, rate_limiter).await
         }
     };
+
+    let (latencies, rps_buckets) = process_stats(start_time, stats);
 
     build_latency_timeline(&config, latencies.clone());
     build_latency_histogram(&config, latencies);
@@ -99,16 +90,16 @@ async fn sync_execution(
     latency_distribution: &[u64],
     n_jobs: usize,
     rate_limiter: LeakyBucket,
-    stats_store: Sender<TaskStats>,
-) {
+) -> Vec<TaskStats> {
     let mut threads = Vec::with_capacity(n_workers);
     let (send, recv) = crossbeam::channel::bounded::<Task>(n_jobs);
+    static TASK_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
     for _ in 0..n_workers {
         let receiver = recv.clone();
-        let stats_sender = stats_store.clone();
 
         threads.push(thread::spawn(move || {
+            let mut thread_stats = vec![];
             for val in receiver {
                 sleep(Duration::from_millis(val.cost));
                 // report metrics
@@ -119,12 +110,13 @@ async fn sync_execution(
                     completion_time: now,
                     overhead: now.duration_since(val.start).as_secs_f64() - val.cost as f64 / 1000.,
                 };
-                stats_sender.send(stats).unwrap_or_default();
+                thread_stats.push(stats);
+                TASK_COUNTER.fetch_add(1, Ordering::Relaxed);
             }
+            thread_stats
         }));
     }
 
-    let start = Instant::now();
     println!("Starting sending tasks...");
 
     for i in 0..n_jobs {
@@ -136,22 +128,19 @@ async fn sync_execution(
 
     println!("Waiting for completion...");
 
-    while stats_store.len() < n_jobs as usize {
+    while TASK_COUNTER.load(Ordering::Relaxed) < n_jobs {
         sleep(Duration::from_secs(1));
     }
 
-    let elapsed = Instant::now().duration_since(start);
-    println!(
-        "Elapsed {:?}, rate: {:.3} tasks per second",
-        elapsed,
-        n_jobs as f64 / elapsed.as_secs_f64()
-    );
-
     drop(send);
 
+    let mut combined_stats = vec![];
     for t in threads {
-        t.join().unwrap();
+        let thread_stats = t.join().unwrap();
+        combined_stats.extend(thread_stats);
     }
+
+    combined_stats
 }
 
 /// Model an async environment, where there are several threads
@@ -160,74 +149,45 @@ async fn async_execution(
     latency_distribution: &[u64],
     n_jobs: usize,
     rate_limiter: LeakyBucket,
-    stats_store: tokio::sync::mpsc::Sender<TaskStats>,
-) {
+) -> Vec<TaskStats> {
     let mut tasks = Vec::with_capacity(n_jobs);
 
-    let start = Instant::now();
     println!("Starting sending tasks...");
 
     for i in 0..n_jobs {
         rate_limiter.acquire_one().await.unwrap_or_default();
         let cost = latency_distribution[i % latency_distribution.len()];
-        let mut stats_sender = stats_store.clone();
         let start = Instant::now();
         tasks.push(tokio::spawn(async move {
             delay_for(Duration::from_millis(cost)).await;
 
             let now = Instant::now();
-            let stats = TaskStats {
+            TaskStats {
                 start_time: start,
                 success: cost < TIMEOUT,
                 completion_time: now,
                 overhead: now.duration_since(start).as_secs_f64() - cost as f64 / 1000.,
-            };
-            stats_sender.send(stats).await.unwrap_or_default();
+            }
         }));
     }
 
     println!("Waiting for completion...");
 
+    let mut combined_stats = vec![];
     for t in tasks {
-        t.await.unwrap();
+        combined_stats.push(t.await.expect("Task failed"));
     }
 
-    let elapsed = Instant::now().duration_since(start);
-    println!(
-        "Elapsed {:?}, rate: {:.3} tasks per second",
-        elapsed,
-        n_jobs as f64 / elapsed.as_secs_f64()
-    );
+    combined_stats
 }
 
-fn process_sync_stats(
+fn process_stats(
     start_time: Instant,
-    stats_recv: Receiver<TaskStats>,
+    stats_collection: Vec<TaskStats>,
 ) -> (Vec<TaskStats>, HashMap<u64, u64>) {
     let mut latencies = vec![];
     let mut rps_buckets = HashMap::new();
-    while !stats_recv.is_empty() {
-        let stats = stats_recv.recv().expect("Must has an element");
-        if stats.success {
-            latencies.push(stats.clone());
-            rps_buckets
-                .entry(stats.completion_time.duration_since(start_time).as_secs())
-                .or_insert(0)
-                .add_assign(1);
-        }
-    }
-    (latencies, rps_buckets)
-}
-
-async fn process_async_stats(
-    n_jobs: usize,
-    start_time: Instant,
-    mut stats_recv: tokio::sync::mpsc::Receiver<TaskStats>,
-) -> (Vec<TaskStats>, HashMap<u64, u64>) {
-    let mut latencies = vec![];
-    let mut rps_buckets = HashMap::new();
-    for _ in 0..n_jobs {
-        let stats = stats_recv.recv().await.expect("Must has an element");
+    for stats in stats_collection {
         if stats.success {
             latencies.push(stats.clone());
             rps_buckets
