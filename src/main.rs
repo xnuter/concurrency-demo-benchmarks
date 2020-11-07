@@ -242,7 +242,7 @@ async fn sync_execution(
                     completion_time: now,
                     overhead: now.duration_since(val.start).as_secs_f64() - val.cost as f64 / 1000.,
                 };
-                stats_sender.try_send(stats).unwrap_or_default();
+                stats_sender.send(stats).unwrap_or_default();
             }
         }));
     }
@@ -254,7 +254,7 @@ async fn sync_execution(
         rate_limiter.acquire_one().await.unwrap_or_default();
         let cost = latency_distribution[i % latency_distribution.len()];
         let now = Instant::now();
-        send.try_send(Task { start: now, cost }).unwrap();
+        send.send(Task { start: now, cost }).unwrap();
     }
 
     println!("Waiting for completion...");
@@ -299,7 +299,7 @@ async fn async_execution(
             let now = Instant::now();
             let stats = TaskStats {
                 start_time: start,
-                success: cost < 1_000,
+                success: cost < TIMEOUT,
                 completion_time: now,
                 overhead: now.duration_since(start).as_secs_f64() - cost as f64 / 1000.,
             };
@@ -347,7 +347,8 @@ fn build_rps_graph(config: &ModelConfig, rps_buckets: HashMap<u64, u64>) {
         total += value as f64;
     }
 
-    let avg = total / (end - start) as f64;
+    let data_points_count = (end - start) as f64;
+    let avg = total / data_points_count;
     let mut deviation = 0.;
     for i in start..end {
         let value = *rps_buckets.get(&i).unwrap_or(&0);
@@ -357,7 +358,7 @@ fn build_rps_graph(config: &ModelConfig, rps_buckets: HashMap<u64, u64>) {
     println!(
         "Avg rate: {:.3}, StdDev: {:.3}",
         avg,
-        (deviation / (end - start) as f64).sqrt()
+        (deviation / data_points_count).sqrt()
     );
 
     let line_plot = line_plot::<u64, u64>(x, y, None);
