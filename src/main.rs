@@ -92,6 +92,114 @@ async fn main() {
     build_rps_graph(&config, rps_buckets);
 }
 
+/// Model multi-thread environment, where each threads can handle
+/// a single connection at a time.
+async fn sync_execution(
+    n_workers: usize,
+    latency_distribution: &[u64],
+    n_jobs: usize,
+    rate_limiter: LeakyBucket,
+    stats_store: Sender<TaskStats>,
+) {
+    let mut threads = Vec::with_capacity(n_workers);
+    let (send, recv) = crossbeam::channel::bounded::<Task>(n_jobs);
+
+    for _ in 0..n_workers {
+        let receiver = recv.clone();
+        let stats_sender = stats_store.clone();
+
+        threads.push(thread::spawn(move || {
+            for val in receiver {
+                sleep(Duration::from_millis(val.cost));
+                // report metrics
+                let now = Instant::now();
+                let stats = TaskStats {
+                    start_time: val.start,
+                    success: val.cost < TIMEOUT,
+                    completion_time: now,
+                    overhead: now.duration_since(val.start).as_secs_f64() - val.cost as f64 / 1000.,
+                };
+                stats_sender.send(stats).unwrap_or_default();
+            }
+        }));
+    }
+
+    let start = Instant::now();
+    println!("Starting sending tasks...");
+
+    for i in 0..n_jobs {
+        rate_limiter.acquire_one().await.unwrap_or_default();
+        let cost = latency_distribution[i % latency_distribution.len()];
+        let now = Instant::now();
+        send.send(Task { start: now, cost }).unwrap();
+    }
+
+    println!("Waiting for completion...");
+
+    while stats_store.len() < n_jobs as usize {
+        sleep(Duration::from_secs(1));
+    }
+
+    let elapsed = Instant::now().duration_since(start);
+    println!(
+        "Elapsed {:?}, rate: {:.3} tasks per second",
+        elapsed,
+        n_jobs as f64 / elapsed.as_secs_f64()
+    );
+
+    drop(send);
+
+    for t in threads {
+        t.join().unwrap();
+    }
+}
+
+/// Model an async environment, where there are several threads
+/// handling up to tens (or hundreds) of thousands of connections simultaneously.
+async fn async_execution(
+    latency_distribution: &[u64],
+    n_jobs: usize,
+    rate_limiter: LeakyBucket,
+    stats_store: tokio::sync::mpsc::Sender<TaskStats>,
+) {
+    let mut tasks = Vec::with_capacity(n_jobs);
+
+    let start = Instant::now();
+    println!("Starting sending tasks...");
+
+    for i in 0..n_jobs {
+        rate_limiter.acquire_one().await.unwrap_or_default();
+        let cost = latency_distribution[i % latency_distribution.len()];
+        let mut stats_sender = stats_store.clone();
+        let start = Instant::now();
+        tasks.push(tokio::spawn(async move {
+            delay_for(Duration::from_millis(cost)).await;
+
+            let now = Instant::now();
+            let stats = TaskStats {
+                start_time: start,
+                success: cost < TIMEOUT,
+                completion_time: now,
+                overhead: now.duration_since(start).as_secs_f64() - cost as f64 / 1000.,
+            };
+            stats_sender.send(stats).await.unwrap_or_default();
+        }));
+    }
+
+    println!("Waiting for completion...");
+
+    for t in tasks {
+        t.await.unwrap();
+    }
+
+    let elapsed = Instant::now().duration_since(start);
+    println!(
+        "Elapsed {:?}, rate: {:.3} tasks per second",
+        elapsed,
+        n_jobs as f64 / elapsed.as_secs_f64()
+    );
+}
+
 fn process_sync_stats(
     start_time: Instant,
     stats_recv: Receiver<TaskStats>,
@@ -215,110 +323,6 @@ impl ModelConfig {
         };
         python_path
     }
-}
-
-async fn sync_execution(
-    n_workers: usize,
-    latency_distribution: &[u64],
-    n_jobs: usize,
-    rate_limiter: LeakyBucket,
-    stats_store: Sender<TaskStats>,
-) {
-    let mut threads = Vec::with_capacity(n_workers);
-    let (send, recv) = crossbeam::channel::bounded::<Task>(n_jobs);
-
-    for _ in 0..n_workers {
-        let receiver = recv.clone();
-        let stats_sender = stats_store.clone();
-
-        threads.push(thread::spawn(move || {
-            for val in receiver {
-                sleep(Duration::from_millis(val.cost));
-                // report metrics
-                let now = Instant::now();
-                let stats = TaskStats {
-                    start_time: val.start,
-                    success: val.cost < TIMEOUT,
-                    completion_time: now,
-                    overhead: now.duration_since(val.start).as_secs_f64() - val.cost as f64 / 1000.,
-                };
-                stats_sender.send(stats).unwrap_or_default();
-            }
-        }));
-    }
-
-    let start = Instant::now();
-    println!("Starting sending tasks...");
-
-    for i in 0..n_jobs {
-        rate_limiter.acquire_one().await.unwrap_or_default();
-        let cost = latency_distribution[i % latency_distribution.len()];
-        let now = Instant::now();
-        send.send(Task { start: now, cost }).unwrap();
-    }
-
-    println!("Waiting for completion...");
-
-    while stats_store.len() < n_jobs as usize {
-        sleep(Duration::from_secs(1));
-    }
-
-    let elapsed = Instant::now().duration_since(start);
-    println!(
-        "Elapsed {:?}, rate: {:.3} tasks per second",
-        elapsed,
-        n_jobs as f64 / elapsed.as_secs_f64()
-    );
-
-    drop(send);
-
-    for t in threads {
-        t.join().unwrap();
-    }
-}
-
-async fn async_execution(
-    latency_distribution: &[u64],
-    n_jobs: usize,
-    rate_limiter: LeakyBucket,
-    stats_store: tokio::sync::mpsc::Sender<TaskStats>,
-) {
-    let mut tasks = Vec::with_capacity(n_jobs);
-
-    let start = Instant::now();
-    println!("Starting sending tasks...");
-
-    for i in 0..n_jobs {
-        rate_limiter.acquire_one().await.unwrap_or_default();
-        let cost = latency_distribution[i % latency_distribution.len()];
-        let mut stats_sender = stats_store.clone();
-        let start = Instant::now();
-        tasks.push(tokio::spawn(async move {
-            delay_for(Duration::from_millis(cost)).await;
-
-            let now = Instant::now();
-            let stats = TaskStats {
-                start_time: start,
-                success: cost < TIMEOUT,
-                completion_time: now,
-                overhead: now.duration_since(start).as_secs_f64() - cost as f64 / 1000.,
-            };
-            stats_sender.send(stats).await.unwrap_or_default();
-        }));
-    }
-
-    println!("Waiting for completion...");
-
-    for t in tasks {
-        t.await.unwrap();
-    }
-
-    let elapsed = Instant::now().duration_since(start);
-    println!(
-        "Elapsed {:?}, rate: {:.3} tasks per second",
-        elapsed,
-        n_jobs as f64 / elapsed.as_secs_f64()
-    );
 }
 
 fn build_rps_graph(config: &ModelConfig, rps_buckets: HashMap<u64, u64>) {
