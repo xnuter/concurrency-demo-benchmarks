@@ -354,7 +354,11 @@ fn build_rps_graph(config: &ModelConfig, rps_buckets: HashMap<u64, u64>) {
         deviation += (avg - value as f64) * (avg - value as f64);
     }
 
-    println!("Avg rate: {:.3}, StdDev: {:.3}", avg, deviation.sqrt());
+    println!(
+        "Avg rate: {:.3}, StdDev: {:.3}",
+        avg,
+        (deviation / (end - start) as f64).sqrt()
+    );
 
     let line_plot = line_plot::<u64, u64>(x, y, None);
     let mut figure = Figure::new();
