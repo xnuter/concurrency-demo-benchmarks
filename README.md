@@ -121,10 +121,6 @@ concurrency-demo-benchmarks --name sync_t500_30s \
                             sync --threads 500
 ```
 
-#### Task queue partitioning
-
-To play around with higher than 1k RPS the `sync-queue-partitioned` branch can be used. 
-
 #### Run async demo
 * 1000 rps
 * 200ms latency (stable)
