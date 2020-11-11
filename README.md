@@ -89,65 +89,65 @@ Avg rate: 1000.000, StdDev: 0.000
 
 #### Run sync demo
 * 1000 rps
-* 200ms latency, 10 endpoints
+* 20ms latency, 10 endpoints
 * 500 threads
 ```
-concurrency-demo-benchmarks --name sync_t500_200ms \
+concurrency-demo-benchmarks --name sync_t500_20ms \
                             --rate 1000 \
                             --num_req 10000 \
-                            --latency "200*10" \
+                            --latency "20*10" \
                             sync --threads 500
 ```
 
 * 1000 rps
-* 600ms latency (stable)
+* 60ms latency (stable)
 * 500 threads
 ```
-concurrency-demo-benchmarks --name sync_t500_600ms \
+concurrency-demo-benchmarks --name sync_t500_60ms \
                             --rate 1000 \
                             --num_req 10000 \
-                            --latency "600*10" \
+                            --latency "60*10" \
                             sync --threads 500
 ```
 
 * 1000 rps
-* 200ms latency but 30s for 10%
+* 20ms latency but 30s for 10%
 * 500 threads
 ```
 concurrency-demo-benchmarks --name sync_t500_30s \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "200*9,30000" \
+                            --latency "20*9,30000" \
                             sync --threads 500
 ```
 
 #### Run async demo
 * 1000 rps
-* 200ms latency (stable)
+* 20ms latency (stable)
 ```
-concurrency-demo-benchmarks --name async_200ms \
+concurrency-demo-benchmarks --name async_20ms \
                             --rate 1000 \
                             --num_req 10000 \
-                            --latency "200*10" \
+                            --latency "20*10" \
                             async
 ```
 
 * 1000 rps
-* 600ms latency (stable)
+* 60ms latency (stable)
 ```
-concurrency-demo-benchmarks --name async_600ms \
+concurrency-demo-benchmarks --name async_60ms \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "600*10" \
+                            --latency "60*10" \
                             async
 ```
 
 * 1000 rps
-* 200ms latency but 30s for 10%
+* 20ms latency but 30s for 10%
 ```
 concurrency-demo-benchmarks --name async_30s \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "200*9,30000" \
+                            --latency "20*9,30000" \
                             async
 ```
