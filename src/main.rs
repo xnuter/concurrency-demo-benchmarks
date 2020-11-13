@@ -1,4 +1,5 @@
 use clap::clap_app;
+use humantime::parse_duration;
 use leaky_bucket::LeakyBucket;
 use matplotrust::{histogram, line_plot, Figure};
 use std::collections::HashMap;
@@ -261,7 +262,7 @@ impl ModelConfig {
 
     fn parse_latency_item(s: &str) -> Vec<u64> {
         if !s.contains('*') {
-            vec![s.parse().expect("Latency items must be positive numbers")]
+            vec![ModelConfig::parse_latency(s)]
         } else {
             let mut split = s.split('*');
             let value = split.next().expect("Must be in format `value*count`");
@@ -271,8 +272,15 @@ impl ModelConfig {
                 .parse()
                 .expect("Illegal numeric value");
             (0..count)
-                .map(|_| value.parse().expect("Illegal numeric value"))
+                .map(|_| ModelConfig::parse_latency(value))
                 .collect()
+        }
+    }
+
+    fn parse_latency(value: &str) -> u64 {
+        match parse_duration(value) {
+            Ok(d) => d.as_millis() as u64,
+            Err(_) => value.parse().expect("Illegal numeric value"),
         }
     }
 

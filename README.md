@@ -29,7 +29,7 @@ You may need to use `--pythob`/`-p` parameter to specify `python3` binary, if it
 concurrency-demo-benchmarks --name async_30s \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "200*9,30000" \
+                            --latency "20ms*9,30s" \
                             --python /somewhere/else/python3 \
                             async
 ```
@@ -95,50 +95,50 @@ Avg rate: 1000.000, StdDev: 0.000
 concurrency-demo-benchmarks --name sync_t500_20ms \
                             --rate 1000 \
                             --num_req 10000 \
-                            --latency "20*10" \
+                            --latency "20ms*10" \
                             sync --threads 500
 ```
 
 * 1000 rps
-* 60ms latency (stable)
+* 60ms latency for 10 targets
 * 500 threads
 ```
 concurrency-demo-benchmarks --name sync_t500_60ms \
                             --rate 1000 \
                             --num_req 10000 \
-                            --latency "60*10" \
+                            --latency "60ms*10" \
                             sync --threads 500
 ```
 
 * 1000 rps
-* 20ms latency but 30s for 10%
+* 20ms latency for 9 targets, but 30s for the other one
 * 500 threads
 ```
 concurrency-demo-benchmarks --name sync_t500_30s \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "20*9,30000" \
+                            --latency "20ms*9,30s" \
                             sync --threads 500
 ```
 
 #### Run async demo
 * 1000 rps
-* 20ms latency (stable)
+* 20ms latency, 10 targets
 ```
 concurrency-demo-benchmarks --name async_20ms \
                             --rate 1000 \
                             --num_req 10000 \
-                            --latency "20*10" \
+                            --latency "20ms*10" \
                             async
 ```
 
 * 1000 rps
-* 60ms latency (stable)
+* 60ms latency , 10 targets
 ```
 concurrency-demo-benchmarks --name async_60ms \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "60*10" \
+                            --latency "60ms*10" \
                             async
 ```
 
@@ -148,6 +148,6 @@ concurrency-demo-benchmarks --name async_60ms \
 concurrency-demo-benchmarks --name async_30s \
                             --rate 1000 \
                             --num_req 100000 \
-                            --latency "20*9,30000" \
+                            --latency "20ms*9,30s" \
                             async
 ```
