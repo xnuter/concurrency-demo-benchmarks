@@ -1,6 +1,6 @@
 [package]
 name = "concurrency-demo-benchmarks"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["xnuter"]
 edition = "2018"
 license = "MIT OR Apache-2.0"

@@ -23,14 +23,14 @@ It generates the following files in the current directory:
 
 where `{name}` is the `--name` (or `-N`) parameter value.
 
-You may need to use `--pythob`/`-p` parameter to specify `python3` binary, if it's not in `/usr/local/bin/python3`. E.g.
+You may need to use `--pythob`/`-p` parameter to specify `python3` binary, if it's not in `/usr/bin/python3`. E.g.
 
 ```
 concurrency-demo-benchmarks --name async_30s \
                             --rate 1000 \
                             --num_req 100000 \
                             --latency "200*9,30000" \
-                            --python /usr/bin/python3 \
+                            --python /somewhere/else/python3 \
                             async
 ```
 

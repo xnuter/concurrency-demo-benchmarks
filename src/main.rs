@@ -278,7 +278,7 @@ impl ModelConfig {
 
     fn get_python_path(&self) -> Option<&str> {
         let python_path = match self.python_path.as_ref() {
-            None => None,
+            None => Some("/usr/bin/python3"),
             Some(s) => Some(s.as_str()),
         };
         python_path
