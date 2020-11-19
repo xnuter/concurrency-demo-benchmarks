@@ -23,7 +23,7 @@ It generates the following files in the current directory:
 
 where `{name}` is the `--name` (or `-N`) parameter value.
 
-You may need to use `--pythob`/`-p` parameter to specify `python3` binary, if it's not in `/usr/bin/python3`. E.g.
+You may need to use `--python`/`-p` parameter to specify `python3` binary, if it's not in `/usr/bin/python3`. E.g.
 
 ```
 concurrency-demo-benchmarks --name async_30s \
@@ -90,35 +90,35 @@ Avg rate: 1000.000, StdDev: 0.000
 #### Run sync demo
 * 1000 rps
 * 20ms latency, 10 endpoints
-* 500 threads
+* 50 threads
 ```
-concurrency-demo-benchmarks --name sync_t500_20ms \
+concurrency-demo-benchmarks --name sync_20ms \
                             --rate 1000 \
                             --num_req 10000 \
                             --latency "20ms*10" \
-                            sync --threads 500
+                            sync --threads 50
 ```
 
 * 1000 rps
 * 60ms latency for 10 targets
-* 500 threads
+* 50 threads
 ```
-concurrency-demo-benchmarks --name sync_t500_60ms \
+concurrency-demo-benchmarks --name sync_60ms \
                             --rate 1000 \
                             --num_req 10000 \
                             --latency "60ms*10" \
-                            sync --threads 500
+                            sync --threads 50
 ```
 
 * 1000 rps
 * 20ms latency for 9 targets, but 30s for the other one
-* 500 threads
+* 50 threads
 ```
-concurrency-demo-benchmarks --name sync_t500_30s \
+concurrency-demo-benchmarks --name sync_30s \
                             --rate 1000 \
                             --num_req 100000 \
                             --latency "20ms*9,30s" \
-                            sync --threads 500
+                            sync --threads 50
 ```
 
 #### Run async demo
