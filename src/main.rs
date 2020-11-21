@@ -210,7 +210,7 @@ impl ModelConfig {
             (@arg NAME: --name -N +takes_value +required "Name of the test-case")
             (@arg RATE: --rate -r +takes_value +required "Request rate per second. E.g. 100 or 1000")
             (@arg NUM_REQUESTS: --num_req -n +takes_value +required "Number of requests. E.g. 1000")
-            (@arg LATENCY_DISTRIBUTION: --latency -l +takes_value +required "Comma separated latency values. E.g. 200,200,200,500")
+            (@arg LATENCY_DISTRIBUTION: --latency -l +takes_value +required "Comma separated latency values. E.g. 20ms*9,30s or 10ms,20ms,30ms")
             (@arg PYTHON_PATH: --python_path -p +takes_value "Optional path to python3, e.g. /usr/bin/python3")
             (@subcommand async =>
                 (about: "Model a service with Async I/O")

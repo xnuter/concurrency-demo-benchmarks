@@ -60,7 +60,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -l, --latency <LATENCY_DISTRIBUTION>    Comma separated latency values. E.g. 200,200,200,500
+    -l, --latency <LATENCY_DISTRIBUTION>    Comma separated latency values. E.g. 20ms*9,30s or 10ms,20ms,30ms
     -N, --name <NAME>                       Name of the test-case
     -n, --num_req <NUM_REQUESTS>            Number of requests. E.g. 1000
     -p, --python_path <PYTHON_PATH>         Optional path to python3, e.g. /usr/bin/python3
