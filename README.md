@@ -3,7 +3,7 @@
 
 ### Overview
 
-A small utility to benchmark different approaches for building concurrent applications.
+A small utility that models blocking and non-blocking forms of handling I/O. You can read more [here](https://medium.com/swlh/distributed-systems-and-asynchronous-i-o-ef0f27655ce5).
 
 #### Pre-requisites
 
