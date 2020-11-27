@@ -5,21 +5,21 @@ use std::sync::Mutex;
 fn sum_batched(observations: &[usize], counter: &AtomicUsize) {
     let mut batch = 0;
     for i in observations {
-        batch += i | 1;
+        batch += i;
     }
     counter.fetch_add(batch, Ordering::Relaxed);
 }
 
 fn sum_naive_atomic(observations: &[usize], counter: &AtomicUsize) {
     for i in observations {
-        counter.fetch_add(*i | 1, Ordering::Relaxed);
+        counter.fetch_add(*i, Ordering::Relaxed);
     }
 }
 
 fn sum_naive_mutex(observations: &[usize], counter_mutex: &Mutex<usize>) {
     for i in observations {
         let mut lock = counter_mutex.lock().expect("Never fails in this bench");
-        *lock += *i | 1;
+        *lock += *i;
     }
 }
 
@@ -28,8 +28,9 @@ fn benchmark_increment(c: &mut Criterion) {
     let counter_atomic: AtomicUsize = AtomicUsize::new(0);
     let counter_mutex: Mutex<usize> = Mutex::new(0);
 
-    let repetitions = 1_000;
-    let vec = (0..repetitions).map(|i| i % 2).collect::<Vec<usize>>();
+    // filling the array with values 0,1,2
+    let repetitions = 1_002;
+    let vec = (0..repetitions).map(|i| i % 3).collect::<Vec<usize>>();
     let increment = vec.as_slice();
 
     c.bench_function("Sum Batched", |b| {

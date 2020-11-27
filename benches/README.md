@@ -8,6 +8,8 @@ These benchmarks compare the difference between manipulating data in the followi
 
 The benchmarks are artificial, but the goal is to give a general idea about the cost of consistency guarantees.
 
+All benchmarks are performed on `Intel(R) Xeon(R) CPU @ 2.30GHz`.
+
 ### Benchmark 1. Incrementing data
 
 ```rust
@@ -33,7 +35,7 @@ That's why another scenario was benchmarked to sum an array.
 ### Benchmark 2. Summing an array
 
 Semantically, this is the same operation - as for the benchmark 1,
-but designed to hide from the compiler the fact that it's all `1`s to add:
+but designed to hide from the compiler the fact that it's all `1`s to add and make it more _realistic_:
 
 ```rust
 fn sum_batched(observations: &[usize], counter: &AtomicUsize) {
@@ -48,14 +50,14 @@ fn sum_batched(observations: &[usize], counter: &AtomicUsize) {
 The difference is not as prominent, but of the same order:
 
 ```
-Sum Batched             time:   0.1313 us                        
-Sum Naive Atomic        time:   5.5989 us                              
-Sum Naive Mutex         time:   21.709 us                             
+Sum Batched             time:   0.1149 us
+Sum Naive Atomic        time:   6.7829 us
+Sum Naive Mutex         time:   21.455 us 
 
-Batched      71474881 operations, 1.000000
-Atomic        1937375 operations, 0.027106
-Mutex          494443 operations, 0.006918
+Sum Batched      76848081 operations, 1.000000
+Sum Atomic        1261587 operations, 0.016417
+Sum Mutex          494443 operations, 0.006434
 ```
 
-`Batched` is faster than `Atomic` ~37 times, and faster than `Mutex` ~145 times.  
+`Batched` is faster than `Atomic` ~61 times, and faster than `Mutex` ~155 times.  
 
