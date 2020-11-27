@@ -41,9 +41,22 @@ but designed to hide from the compiler the fact that it's all `1`s to add and ma
 fn sum_batched(observations: &[usize], counter: &AtomicUsize) {
     let mut batch = 0;
     for i in observations {
-        batch += i | 1;
+        batch += i;
     }
     counter.fetch_add(batch, Ordering::Relaxed);
+}
+
+fn sum_naive_atomic(observations: &[usize], counter: &AtomicUsize) {
+    for i in observations {
+        counter.fetch_add(*i, Ordering::Relaxed);
+    }
+}
+
+fn sum_naive_mutex(observations: &[usize], counter_mutex: &Mutex<usize>) {
+    for i in observations {
+        let mut lock = counter_mutex.lock().expect("Never fails in this bench");
+        *lock += *i;
+    }
 }
 ```
 
