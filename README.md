@@ -42,10 +42,13 @@ cargo install concurrency-demo-benchmarks
 
 
 #### Run batched/atomic/mutex increments benchmark
+
 ```
 git clone https://github.com/xnuter/concurrency-demo-benchmarks.git
 cargo bench
 ```
+
+See [benchmark comments here](./benches).
 
 #### Command line options
 
